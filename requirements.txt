@@ -23,7 +23,7 @@ fonttools==4.42.0
 glfw==2.6.2
 gymnasium==0.29.0
 idna==3.4
-imageio==2.31.1
+imageio==2.33.0
 imageio-ffmpeg==0.4.8
 importlib-metadata==6.8.0
 importlib-resources==6.0.1
