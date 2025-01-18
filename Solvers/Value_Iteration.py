@@ -63,8 +63,6 @@ class ValueIteration(AbstractSolver):
         """
 
         # you can add variables here if it is helpful
-        # initialize delta to 0
-        delta = 0
 
         # Update the estimated value of each state
         for each_state in range(self.env.observation_space.n):
