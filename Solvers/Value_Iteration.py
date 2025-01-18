@@ -73,7 +73,7 @@ class ValueIteration(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
-
+            
             # store old value
             old_val = self.V[each_state]
 
@@ -82,20 +82,7 @@ class ValueIteration(AbstractSolver):
 
             # update the value function for this state
             self.V[each_state] = np.max(action_vals)
-            # print(f'self.V[{each_state}]={self.V[each_state]}')
 
-
-            # calculate the change between values in this state, and
-            # then choose the max value between the old delta and the
-            # new delta
-            delta = max(delta, abs(old_val - self.V[each_state]))
-
-        # if this new delta is less than the value of epsilon, we
-        # have converged and we stop iterating
-        # if delta < self.options.epsilon:
-        #     return self.V
-
-        # print(f'Statistics.Rewards.value={np.sum(self.V)}')
         # Dont worry about this part
         self.statistics[Statistics.Rewards.value] = np.sum(self.V)
         self.statistics[Statistics.Steps.value] = -1
