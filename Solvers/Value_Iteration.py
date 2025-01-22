@@ -241,8 +241,6 @@ class AsynchVI(ValueIteration):
 
         # Handle updating the neighboring states affected by this state
         for neighbor_state in self.pred[state]:
-            if neighbor_state == state:
-                continue
 
             # initialize neighbor_delta to 0
             # This is used to track our change in priority
@@ -294,7 +292,7 @@ class PriorityQueue:
 
     def pop(self):
         (_, _, item) = heapq.heappop(self.heap)
-        self.count -= 1
+        #self.count -= 1
         return item
 
     def isEmpty(self):
