@@ -14,10 +14,10 @@ from Solvers.Abstract_Solver import AbstractSolver, Statistics
 class ValueIteration(AbstractSolver):
     def __init__(self, env, eval_env, options):
         assert str(env.observation_space).startswith("Discrete"), (
-            str(self) + " cannot handle non-discrete state spaces"
+                str(self) + " cannot handle non-discrete state spaces"
         )
         assert str(env.action_space).startswith("Discrete"), (
-            str(self) + " cannot handle non-discrete action spaces"
+                str(self) + " cannot handle non-discrete action spaces"
         )
         super().__init__(env, eval_env, options)
         self.V = np.zeros(env.observation_space.n)
@@ -71,7 +71,7 @@ class ValueIteration(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
-            
+
             # store old value
             old_val = self.V[each_state]
 
@@ -157,7 +157,6 @@ class ValueIteration(AbstractSolver):
             best_action_val = np.argmax(action_vals)
 
             return best_action_val
-            
 
         return policy_fn
 
@@ -184,8 +183,6 @@ class AsynchVI(ValueIteration):
                                 self.pred[next_state].add(s)
                             except KeyError:
                                 self.pred[next_state] = set()
-        # print(f'pred= \n{self.pred}')
-        # print(f'pq= \n{self.pq.__dict__}')
 
     def train_episode(self):
         """
@@ -212,19 +209,15 @@ class AsynchVI(ValueIteration):
         # Update the value function. Ref: Sutton book eq. 4.10. #
         #########################################################
 
-        # initialize delta to 0
-        # This is used to track our change in priority
-        delta = 0
-
         # Get the highest priority state
         state = self.pq.pop()
 
-        #
-        # Perform the Bellman computation
-        #
-        #
+        ###################################
+        #   Perform the Bellman update    #
+        ###################################
+
         # store old value
-        old_val = self.V[state]
+        # old_val = self.V[state]
 
         # get the action values
         action_vals = self.one_step_lookahead(state)
@@ -233,18 +226,10 @@ class AsynchVI(ValueIteration):
         new_state_val = np.max(action_vals)
         self.V[state] = new_state_val
 
-        # calculate the change between values for this state
-        delta = max(delta, abs(old_val - self.V[state]))
-
-        # update the new priority for this state
-        self.pq.update(state, delta)
-
         # Handle updating the neighboring states affected by this state
         for neighbor_state in self.pred[state]:
-
-            # initialize neighbor_delta to 0
             # This is used to track our change in priority
-            neighbor_delta = 0
+            new_priority = 0
 
             # store old value
             neighbor_old_val = self.V[neighbor_state]
@@ -255,19 +240,15 @@ class AsynchVI(ValueIteration):
             # update the value function for this state
             neighbor_new_state_val = np.max(neighbor_action_vals)
 
-            # calculate the change between values in this state
-            neighbor_delta = -abs(neighbor_old_val - neighbor_new_state_val)
+            # calculate the change between values in this state to get our new priority
+            new_priority = -abs(neighbor_old_val - neighbor_new_state_val)
 
-            # print(f'Updating {state}-->{neighbor_state}')
-
-            # update the new priority for this state
-            self.pq.update(neighbor_state, neighbor_delta)
+            # update the priority for this state
+            self.pq.update(neighbor_state, new_priority)
 
         # you can ignore this part
         self.statistics[Statistics.Rewards.value] = np.sum(self.V)
         self.statistics[Statistics.Steps.value] = -1
-
-        # print(f'pq= \n{self.pq.__dict__}')
 
     def __str__(self):
         return "Asynchronous VI"
@@ -292,7 +273,6 @@ class PriorityQueue:
 
     def pop(self):
         (_, _, item) = heapq.heappop(self.heap)
-        #self.count -= 1
         return item
 
     def isEmpty(self):
@@ -304,7 +284,6 @@ class PriorityQueue:
         # If item not in priority queue, do the same thing as self.push.
         for index, (p, c, i) in enumerate(self.heap):
             if i == item:
-                # print(f'Priority[{item}]: old|new --> {p}|{priority}')
                 if p <= priority:
                     break
                 del self.heap[index]
@@ -312,5 +291,4 @@ class PriorityQueue:
                 heapq.heapify(self.heap)
                 break
         else:
-            # print(f'Re-adding Priority[{item}]: {priority}')
             self.push(item, priority)
