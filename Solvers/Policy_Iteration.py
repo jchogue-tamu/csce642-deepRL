@@ -36,7 +36,7 @@ class PolicyIteration(AbstractSolver):
             Use:
                 self.policy: [S, A] shaped matrix representing the policy.
                              self.policy[s,a] denotes \pi(a|s)
-                             Note: Policy is determistic i.e., only one element in self.policy[s,:] is 1 rest are 0
+                             Note: Policy is deterministic i.e., only one element in self.policy[s,:] is 1 rest are 0
                 self.env: OpenAI environment.
                     env.P represents the transition probabilities of the environment.
                     env.P[s][a] is a list of transition tuples (prob, next_state, reward, done).
@@ -92,7 +92,7 @@ class PolicyIteration(AbstractSolver):
         Use:
             self.policy: [S, A] shaped matrix representing the policy.
                          self.policy[s,a] denotes \pi(a|s)
-                         Note: Policy is determistic i.e., only one element in self.policy[s,:] is 1 rest are 0
+                         Note: Policy is deterministic i.e., only one element in self.policy[s,:] is 1 rest are 0
             self.env: OpenAI env. env.P represents the transition probabilities of the environment.
                 env.P[s][a] is a list of transition tuples (prob, next_state, reward, done).
                 env.observation_space.n is the number of states in the environment.
@@ -103,6 +103,29 @@ class PolicyIteration(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+
+        # each policy eval starts with the value function from the previous policy
+
+        # initialize the transition probabilities and rewards that we want to update
+        num_states = self.env.observation_space.n
+        probabilities_mat = np.zeros((num_states, num_states))
+        rewards_vect = np.zeros(num_states)
+
+        for state in range(num_states):
+            # find the action that the policy chose (value of 1)
+            action_idx = [index for index, value in enumerate(self.policy[state]) if value == 1][0]
+
+            # iterate over all possible outcomes for the chosen action
+            for prob, next_state, reward, done in self.env.P[state][action_idx]:
+                # update probability for transitioning from this state to next_state
+                probabilities_mat[state, next_state] += prob
+
+                # add expected reward from this transition to this state's current reward
+                rewards_vect[state] += prob * reward
+
+                # TODO - finish
+
+
 
     def create_greedy_policy(self):
         """
