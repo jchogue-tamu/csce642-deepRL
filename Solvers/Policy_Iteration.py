@@ -57,7 +57,15 @@ class PolicyIteration(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
+            # do one_step_lookahead to get the action values
+            action_vals = self.one_step_lookahead(s)
 
+            # determine the best action
+            best_action = np.argmax(action_vals)
+
+            # compute the new policy value
+            new_policy_value = np.eye(self.env.action_space.n)[best_action]
+            self.policy[s] = new_policy_value
 
         # In DP methods we don't interact with the environment so we will set the reward to be the sum of state values
         # and the number of steps to -1 representing an invalid value
@@ -106,25 +114,36 @@ class PolicyIteration(AbstractSolver):
 
         # each policy eval starts with the value function from the previous policy
 
-        # initialize the transition probabilities and rewards that we want to update
+        # set transition probabilities and rewards to zero to start
+        # self.V already zeroed in PolicyIteration init()
         num_states = self.env.observation_space.n
-        probabilities_mat = np.zeros((num_states, num_states))
-        rewards_vect = np.zeros(num_states)
+        probabilities = np.zeros((num_states, num_states))
+        rewards = np.zeros(num_states)
 
+        # for each sate, get the appropriate action index chosen by the policy for that state
+        # then loop through all possible outcomes for that action and update the probability 
+        # of transitioning from that state to the next state. Then use the expected reward
+        # from the transition to update the state's current reward.
         for state in range(num_states):
-            # find the action that the policy chose (value of 1)
+
+            # get the action that the policy chose (value of 1)
+            #   As stated in the comments above, this is deterministic
+            #   and only one action has a value of 1.
             action_idx = [index for index, value in enumerate(self.policy[state]) if value == 1][0]
 
             # iterate over all possible outcomes for the chosen action
             for prob, next_state, reward, done in self.env.P[state][action_idx]:
                 # update probability for transitioning from this state to next_state
-                probabilities_mat[state, next_state] += prob
+                probabilities[state, next_state] += prob
 
                 # add expected reward from this transition to this state's current reward
-                rewards_vect[state] += prob * reward
+                rewards[state] += prob * reward
 
-                # TODO - finish
+        # discount the probabilities in the transition matrix
+        a = np.eye(num_states) - self.options.gamma * probabilities 
 
+        # use a linear system solver to get the value of the policy
+        self.V = np.linalg.solve(a, rewards)
 
 
     def create_greedy_policy(self):
