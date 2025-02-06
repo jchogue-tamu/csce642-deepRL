@@ -72,9 +72,6 @@ class ValueIteration(AbstractSolver):
             #   YOUR IMPLEMENTATION HERE   #
             ################################
 
-            # store old value
-            old_val = self.V[each_state]
-
             # get the action values
             action_vals = self.one_step_lookahead(each_state)
 
@@ -215,9 +212,6 @@ class AsynchVI(ValueIteration):
         ###################################
         #   Perform the Bellman update    #
         ###################################
-
-        # store old value
-        # old_val = self.V[state]
 
         # get the action values
         action_vals = self.one_step_lookahead(state)
