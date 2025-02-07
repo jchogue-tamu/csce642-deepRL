@@ -66,6 +66,12 @@ class MonteCarlo(AbstractSolver):
         #   YOUR IMPLEMENTATION HERE   #
         ################################
 
+        A = np.zeros(self.env.action_space.n)
+        for a in range(self.env.action_space.n):
+            next_state, reward, done, _ = self.step(a):
+                A[a] += prob * (reward + self.options.gamma * self.V[next_state])
+        return A
+
     def __str__(self):
         return "Monte Carlo"
 
@@ -76,7 +82,7 @@ class MonteCarlo(AbstractSolver):
         Use:
             self.Q: A dictionary that maps from state -> action-values.
                 Each value is a numpy array of length nA
-            self.options.epsilon: Chance the sample a random action. Float betwen 0 and 1.
+            self.options.epsilon: Chance the sample a random action. Float between 0 and 1.
             self.env.action_space.n: Number of actions in the environment.
 
         Returns:
@@ -91,6 +97,20 @@ class MonteCarlo(AbstractSolver):
             #   YOUR IMPLEMENTATION HERE   #
             ################################
 
+            # initialize vector of action probabilities
+            #   multiply by epsilon and divide that by the size of the action space
+            A = (np.ones(nA, dtype=float) * self.options.epsilon) / nA
+
+            # get the best action value from the observation. 
+            #   argmax will arbitrarily break ties for us
+            best_action_val = np.argmax(self.Q[observation])
+
+            # compute the greedy action probability ((1 - eps) + (eps / nA))
+            A[best_action_val] = (1 - self.options.epsilon) + A[best_action_val]
+
+            return A
+
+            
         return policy_fn
 
     def create_greedy_policy(self):
@@ -109,7 +129,7 @@ class MonteCarlo(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
-
+            return np.argmax(self.Q[state])
 
         return policy_fn
 
