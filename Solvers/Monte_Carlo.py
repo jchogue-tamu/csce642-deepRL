@@ -82,9 +82,9 @@ class MonteCarlo(AbstractSolver):
             # update current state to point to the next state
             state = next_state
 
-            # check if this is the terminal state
+            # bail if this is a terminal state
             if done:
-                print('Terminal State')
+                # print('Terminal State. Breaking from the loop.')
                 break
 
 
@@ -223,9 +223,10 @@ class OffPolicyMC(MonteCarlo):
 
         # Iterate over each step in the episode
         for _ in np.arange(self.options.steps):
+            # get the behavior policy probs
             probs = self.behavior_policy(state)
 
-            # randomly select an action (index) given the probabilities
+            # randomly select an action (index) given the b probs
             a = np.random.choice(np.arange(len(probs)), p=probs)
 
             # take a step
@@ -237,9 +238,9 @@ class OffPolicyMC(MonteCarlo):
             # update current state to point to the next state
             state = next_state
 
-            # check if this is the terminal state
+            # bail if this is a terminal state
             if done:
-                print('Terminal State')
+                # print('Terminal State. Breaking from the loop.')
                 break
 
 
@@ -252,26 +253,28 @@ class OffPolicyMC(MonteCarlo):
         for s, a, r in reversed(episode):
             # compute the new return
             G = r + discount_factor * G
-
-            # b_probs = self.behavior_policy(s)[a]
-            # if b_probs > 0:
-        
+            
             # update cum. sum of weights
             self.C[s][a] += w
 
             # update Q-value using weighted importance sampling
             self.Q[s][a] += (w / self.C[s][a]) * (G - self.Q[s][a])
 
-            # Get greedy action from Q-values
-            best_action = np.argmax(self.Q[s])
+            # Get greedy action after updating Q-values
+            best_action = self.target_policy(s)
+
+            # bail if we start to diverge
             if a != best_action:
-                print('Diverging from best known policy. Moving on to sample next trajectory.')
+                # print('Diverging from best known policy. Moving on to sample next trajectory.')
                 break
 
-
+            # make sure we aren't dividing by zero when we update weights, if so, bail
+            b_probs = self.behavior_policy(s)[a]
+            if b_probs == 0:
+                break
+            
             # update important sampling weight (w)
-            # w *= 1 / b_probs
-            w *= 1 / self.behavior_policy(s)[a]
+            w *= 1 / b_probs
         
 
     def create_random_policy(self):
