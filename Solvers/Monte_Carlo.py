@@ -72,7 +72,7 @@ class MonteCarlo(AbstractSolver):
 
         # Iterate over each step in the episode
         # for step in self.options.steps:
-        for i in np.arange(self.options.steps):
+        for _ in np.arange(self.options.steps):
             probabilities = self.policy(state)
             num_probs = len(probabilities)
 
@@ -95,30 +95,24 @@ class MonteCarlo(AbstractSolver):
 
             
 
-            # initialize return
-            G = 0
-            visited = set()
+        # initialize return
+        G = 0
 
-            # using the transitions in this episode, update the Q-function
-            # iterate backwards through the episode/trajectory list
-            for s, a, r in reversed(episode):
-                # compute the new return
-                G = r + discount_factor * G
+        # using the transitions in this episode, update the Q-function
+        # iterate backwards through the episode/trajectory list
+        for s, a, r in reversed(episode):
+            # compute the new return
+            G = r + discount_factor * G
 
-                if (s,a) not in visited:
-                    visited.add((s,a))
+            # compute the updated running sum and count
+            self.returns_sum[(s,a)] += G
+            self.returns_count[(s,a)] += 1
 
-                    # compute the updated running sum and count
-                    self.returns_sum[(s,a)] += G
-                    self.returns_count[(s,a)] += 1
+            current_sum = self.returns_sum[(s,a)]
+            current_count = self.returns_count[(s,a)]
 
-                    current_sum = self.returns_sum[(s,a)]
-                    current_count = self.returns_count[(s,a)]
-
-                    # compute the average
-                    self.Q[s][a] = current_sum / current_count
-                else:
-                    print(f'This state has already been visited ({s},{a})')
+            # compute the average
+            self.Q[s][a] = current_sum / current_count
     
 
     def __str__(self):
