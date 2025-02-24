@@ -84,7 +84,7 @@ class MonteCarlo(AbstractSolver):
 
             # bail if this is a terminal state
             if done:
-                # print('Terminal State. Breaking from the loop.')
+                # print('reached terminal state. breaking from the loop.')
                 break
 
 
@@ -240,7 +240,7 @@ class OffPolicyMC(MonteCarlo):
 
             # bail if this is a terminal state
             if done:
-                # print('Terminal State. Breaking from the loop.')
+                # print('reached terminal state. breaking from the loop.')
                 break
 
 
