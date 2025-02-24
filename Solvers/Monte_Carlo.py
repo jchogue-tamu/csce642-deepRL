@@ -66,18 +66,12 @@ class MonteCarlo(AbstractSolver):
         #   YOUR IMPLEMENTATION HERE   #
         ################################
 
-        # RUN THIS COMMAND
-        # python autograder.py mc
-        #
-
         # Iterate over each step in the episode
-        # for step in self.options.steps:
         for _ in np.arange(self.options.steps):
-            probabilities = self.policy(state)
-            num_probs = len(probabilities)
+            probs = self.policy(state)
 
-            # randomly select an action given the probabilities
-            a = np.random.choice(np.arange(num_probs), p=probabilities)
+            # randomly select an action (index) given the probabilities
+            a = np.random.choice(np.arange(len(probs)), p=probs)
 
             # take a step
             next_state, reward, done, _ = self.step(a)
@@ -93,7 +87,6 @@ class MonteCarlo(AbstractSolver):
                 print('Terminal State')
                 break
 
-            
 
         # initialize return
         G = 0
@@ -226,6 +219,59 @@ class OffPolicyMC(MonteCarlo):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        discount_factor = self.options.gamma
+
+        # Iterate over each step in the episode
+        for _ in np.arange(self.options.steps):
+            probs = self.behavior_policy(state)
+
+            # randomly select an action (index) given the probabilities
+            a = np.random.choice(np.arange(len(probs)), p=probs)
+
+            # take a step
+            next_state, reward, done, _ = self.step(a)
+
+            # save off this step of the trajectory
+            episode.append((state, a, reward))
+
+            # update current state to point to the next state
+            state = next_state
+
+            # check if this is the terminal state
+            if done:
+                print('Terminal State')
+                break
+
+
+        # initialize return and weighted importance sampling
+        G = 0
+        w = 1
+
+        # using the transitions in this episode, update the Q-function
+        # iterate backwards through the episode/trajectory list
+        for s, a, r in reversed(episode):
+            # compute the new return
+            G = r + discount_factor * G
+
+            # b_probs = self.behavior_policy(s)[a]
+            # if b_probs > 0:
+        
+            # update cum. sum of weights
+            self.C[s][a] += w
+
+            # update Q-value using weighted importance sampling
+            self.Q[s][a] += (w / self.C[s][a]) * (G - self.Q[s][a])
+
+            # Get greedy action from Q-values
+            best_action = np.argmax(self.Q[s])
+            if a != best_action:
+                print('Diverging from best known policy. Moving on to sample next trajectory.')
+                break
+
+
+            # update important sampling weight (w)
+            # w *= 1 / b_probs
+            w *= 1 / self.behavior_policy(s)[a]
         
 
     def create_random_policy(self):
