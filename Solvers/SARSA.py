@@ -44,9 +44,35 @@ class Sarsa(AbstractSolver):
 
         # Reset the environment
         state, _ = self.env.reset()
+
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+
+        # choose an epsilon-greedy action
+        action_probs = self.epsilon_greedy_action(state)
+        action = np.random.choice(np.arange(len(action_probs)), p=action_probs)
+
+        # Iterate over each step in the episode
+        for _ in np.arange(self.options.steps):
+            # take a step
+            next_state, reward, done, _ = self.step(action)
+
+            # choose A' from S' using (epsilon-greedy) policy derived from Q
+            next_action_probs = self.epsilon_greedy_action(next_state)
+            next_action = np.random.choice(np.arange(len(next_action_probs)), p=next_action_probs)
+
+            # update the current state's Q-values
+            self.Q[state][action] += self.options.alpha * (reward + self.options.gamma * self.Q[next_state][next_action] - self.Q[state][action])
+
+            # update current state and action to point to the next ones
+            state = next_state
+            action = next_action
+
+            # bail if this is a terminal state
+            if done:
+                # print('reached terminal state. breaking from the loop.')
+                break
 
     def __str__(self):
         return "Sarsa"
@@ -63,6 +89,7 @@ class Sarsa(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
+            return np.argmax(self.Q[state])
 
         return policy_fn
 
@@ -80,6 +107,21 @@ class Sarsa(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        nA = self.env.action_space.n
+
+        # initialize vector of action probabilities
+        #   multiply by epsilon and divide that by the size of the action space
+        A = (np.ones(nA, dtype=float) * self.options.epsilon) / nA
+
+        # get the best action value from this state's Q-values. 
+        #   argmax will arbitrarily break ties for us
+        best_action_val = np.argmax(self.Q[state])
+
+        # compute the greedy action probability ((1 - eps) + (eps / nA))
+        A[best_action_val] = (1 - self.options.epsilon) + A[best_action_val]
+
+        return A
+        
 
     def plot(self, stats, smoothing_window=20, final=False):
         plotting.plot_episode_stats(stats, smoothing_window, final=final)
