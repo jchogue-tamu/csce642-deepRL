@@ -55,6 +55,29 @@ class QLearning(AbstractSolver):
         #   YOUR IMPLEMENTATION HERE   #
         ################################
 
+        # Iterate over each step in the episode
+        for _ in np.arange(self.options.steps):
+            # choose an epsilon-greedy action
+            action_probs = self.epsilon_greedy_action(state)
+            action = np.random.choice(np.arange(len(action_probs)), p=action_probs)
+
+            # take a step
+            next_state, reward, done, _ = self.step(action)
+
+            # get the best action from the next state's Q-values
+            next_action = np.argmax(self.Q[next_state])
+
+            # update the current state's Q-values
+            self.Q[state][action] += self.options.alpha * (reward + self.options.gamma * self.Q[next_state][next_action] - self.Q[state][action])
+
+            # update current state to point to the next state
+            state = next_state
+
+            # bail if this is a terminal state
+            if done:
+                # print('reached terminal state. breaking from the loop.')
+                break
+
     def __str__(self):
         return "Q-Learning"
 
@@ -75,7 +98,8 @@ class QLearning(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
-            return -1
+            # return the greedy action for the state's Q-values
+            return np.argmax(self.Q[state])
 
         return policy_fn
 
@@ -93,6 +117,21 @@ class QLearning(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        nA = self.env.action_space.n
+
+        # initialize vector of action probabilities
+        #   multiply by epsilon and divide that by the size of the action space
+        A = (np.ones(nA, dtype=float) * self.options.epsilon) / nA
+
+        # get the best action value from this state's Q-values. 
+        #   argmax will arbitrarily break ties for us
+        best_action_val = np.argmax(self.Q[state])
+
+        # compute the greedy action probability ((1 - eps) + (eps / nA))
+        A[best_action_val] = (1 - self.options.epsilon) + A[best_action_val]
+
+        return A
+
 
 
 class ApproxQLearning(QLearning):
