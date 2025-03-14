@@ -120,8 +120,6 @@ class DQN(AbstractSolver):
 
         return A
 
-        
-
 
     def compute_target_values(self, next_states, rewards, dones):
         """
@@ -134,6 +132,7 @@ class DQN(AbstractSolver):
         #   YOUR IMPLEMENTATION HERE   #
         ################################
 
+        target_q = torch.empty(len(next_states))
         # disable gradient tracking for target vals
         with torch.no_grad():
             target_q_values = self.target_model(next_states)
@@ -146,6 +145,8 @@ class DQN(AbstractSolver):
             target_q = rewards + self.options.gamma * (best_next_q_values * (1 - dones))
         
         return target_q
+
+        # return rewards + self.options.gamma*torch.max(self.target_model(next_states), dim=-1)[0] * (1-dones)
 
     def replay(self):
         """
@@ -220,16 +221,15 @@ class DQN(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
-            nA = self.env.action_space.n
-
             # choose an epsilon-greedy action
             A = self.epsilon_greedy(state)
-            action = np.random.choice(nA, p=A)
+            action = np.random.choice(np.arange(len(A)), p=A)
 
             # take a step
             next_state, reward, done, _ = self.step(action)
 
-            # next_state = np.array(next_state, dtype=np.float32)
+            # increment step counter
+            self.n_steps += 1
 
             # save this transition in the replay buffer
             self.memorize(state, action, reward, next_state, done)
@@ -237,16 +237,13 @@ class DQN(AbstractSolver):
             # perform TD learning for Q-values on past transitions
             self.replay()
 
+            # point current state to next state
+            state = next_state
+
             # determine if we should update target estimator
             update_target_network = (self.n_steps % self.options.update_target_estimator_every == 0)
             if update_target_network:
                 self.update_target_model()
-
-            # increment step counter
-            self.n_steps += 1
-
-            # point current state to next state
-            state = next_state
 
             if done:
                 # print('reached terminal state. breaking from the loop.')
