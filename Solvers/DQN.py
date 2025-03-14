@@ -90,7 +90,7 @@ class DQN(AbstractSolver):
             The probabilities (as a Numpy array) associated with each action for 'state'.
 
         Use:
-            self.env.action_space.n: Number of avilable actions
+            self.env.action_space.n: Number of available actions
             self.torch.as_tensor(state): Convert Numpy array ('state') to a tensor
             self.model(state): Returns the predicted Q values at a 
                 'state' as a tensor. One value per action.
@@ -101,6 +101,26 @@ class DQN(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        nA = self.env.action_space.n
+
+        # initialize vector of action probabilities
+        #   multiply by epsilon and divide that by the size of the action space
+        A = (np.ones(nA, dtype=float) * self.options.epsilon) / nA
+
+        # get the predicted Q-values for the given state (as a tensors)
+        state = torch.as_tensor(state, dtype=torch.float32)
+        q_values = self.model(state)
+
+        # get the best action value from this state's Q-values. 
+        #   argmax will arbitrarily break ties for us
+        best_action_val = torch.argmax(q_values).item()
+
+        # compute the greedy action probability ((1 - eps) + (eps / nA))
+        A[best_action_val] = (1 - self.options.epsilon) + A[best_action_val]
+
+        return A
+
+        
 
 
     def compute_target_values(self, next_states, rewards, dones):
