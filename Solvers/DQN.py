@@ -108,7 +108,7 @@ class DQN(AbstractSolver):
         A = (np.ones(nA, dtype=float) * self.options.epsilon) / nA
 
         # get the predicted Q-values for the given state (as a tensors)
-        state = torch.as_tensor(state, dtype=torch.float32)
+        state = torch.as_tensor(state, dtype=torch.float32).unsqueeze(0)
         q_values = self.model(state)
 
         # get the best action value from this state's Q-values. 
@@ -134,6 +134,18 @@ class DQN(AbstractSolver):
         #   YOUR IMPLEMENTATION HERE   #
         ################################
 
+        # disable gradient tracking for target vals
+        with torch.no_grad():
+                target_q_values = self.target_model(next_states)
+
+                # get max of each next state's Q-values
+                best_next_q_values = torch.max(target_q_values, dim=1)[0]
+
+                # compute the target Q-values
+                #    ignore best next Q-values if terminal state
+                target_q = rewards + self.options.gamma * (best_next_q_values * (1 - dones))
+        
+        return target_q
 
     def replay(self):
         """
