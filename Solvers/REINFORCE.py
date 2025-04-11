@@ -76,6 +76,20 @@ class Reinforce(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        # the complete return from time t
+        G = 0
+
+        # treat rewards as a tensor
+        rewards_tensor = torch.tensor(rewards, dtype=torch.float32)
+        returns = torch.zeros_like(rewards_tensor)
+        
+        # for each step, compute the return
+        for t in reversed(range(len(rewards_tensor))):
+            G = rewards_tensor[t] + gamma * G
+            returns[t] = G
+        
+        # return the computed list of returns
+        return returns.tolist()
 
     def select_action(self, state):
         """
@@ -137,7 +151,28 @@ class Reinforce(AbstractSolver):
             #   YOUR IMPLEMENTATION HERE   #
             # Run update_model() only ONCE #
             # at the END of an episode.    #
-            ################################
+            ################################    
+            # use current policy to select an action
+            a, p, b = self.select_action(state)
+
+            # perform the action, and get the next state and reward
+            next_state, r, done, _ = self.step(a)
+
+            # save the probability (p), reward (r), and baseline (b)
+            action_probs.append(p)
+            rewards.append(r)
+            baselines.append(b)
+
+            # move to next state
+            state = next_state
+
+            # break if we are done
+            if done:
+                # print('reached terminal state. breaking from the loop.')
+                break
+
+        # update the model with the updated rewards, action probabilities, and value function
+        self.update_model(rewards, action_probs, baselines)
 
 
     def pg_loss(self, advantage, prob):
@@ -160,6 +195,11 @@ class Reinforce(AbstractSolver):
         #   YOUR IMPLEMENTATION HERE   #
         ################################
 
+        # compute the unreduced loss
+        #     policy gradient loss is = (-log(probabilities)) * advantage
+        pgl = -torch.log(prob) * advantage
+
+        return pgl
 
     def __str__(self):
         return "REINFORCE"
