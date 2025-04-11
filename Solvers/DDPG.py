@@ -154,6 +154,18 @@ class DDPG(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        # retrieve the greedy action from next_states
+        next_actions = self.target_actor_critic.pi(next_states)
+
+        # retrieve Q-values for next states and next actions
+        Q = self.target_actor_critic.q(next_states, next_actions)
+
+        # compute the target Q-values
+        #    ignore best next Q-values if terminal state
+        target_q = rewards + self.options.gamma * (Q * (1 - dones))
+
+        # return target q value as a tensor
+        return torch.as_tensor(target_q, dtype=torch.float32)
 
 
     def replay(self):
@@ -220,7 +232,27 @@ class DDPG(AbstractSolver):
             ################################
             #   YOUR IMPLEMENTATION HERE   #
             ################################
-            
+            # use current policy to select an action
+            a = self.select_action(state)
+
+            # perform the action, and get the next state, reward, and terminal state status
+            next_state, r, done, _ = self.step(a)
+
+            # memorize the transition in the replay buf
+            self.memorize(state, a, r, next_state, done)
+
+            # sample transitions fromr eplay buf
+            self.replay()
+
+            # now update target networks
+            self.update_target_networks()
+
+            if done:
+                # print('reached terminal state. breaking from the loop.')
+                break
+
+            # update current state to point to the next one
+            state = next_state
 
     def q_loss(self, current_q, target_q):
         """
@@ -236,6 +268,8 @@ class DDPG(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        # compute Mean Squared Error loss
+        return F.mse_loss(current_q, target_q)
 
     def pi_loss(self, states):
         """
@@ -258,6 +292,14 @@ class DDPG(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        # retrieve the greedy action
+        greedy_as = self.actor_critic.pi(states)
+
+        # calculate Q-values for the given states and greedy actions
+        q_values = self.actor_critic.q(states, greedy_as)
+
+        # policy gradient loss is the negation of Q-values
+        return -(q_values)
 
     def __str__(self):
         return "DDPG"
