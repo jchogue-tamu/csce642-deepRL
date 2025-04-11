@@ -155,7 +155,7 @@ class Reinforce(AbstractSolver):
             # use current policy to select an action
             a, p, b = self.select_action(state)
 
-            # perform the action, and get the next state and reward
+            # perform the action, and get the next state, reward, and terminal state status
             next_state, r, done, _ = self.step(a)
 
             # save the probability (p), reward (r), and baseline (b)
@@ -163,7 +163,7 @@ class Reinforce(AbstractSolver):
             rewards.append(r)
             baselines.append(b)
 
-            # move to next state
+            # update current state to point to the next one
             state = next_state
 
             # break if we are done

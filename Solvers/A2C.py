@@ -130,6 +130,29 @@ class A2C(AbstractSolver):
             # only ONCE at EACH step in    #
             # an episode.                  # 
             ################################
+            # use current policy to select an action
+            a, p, v = self.select_action(state)
+
+            # perform the action, and get the next state, reward, and terminal state status
+            next_state, r, done, _ = self.step(a)
+
+            # retrieve value for next state (AKA bootstrapping)
+            next_state_tensor = torch.as_tensor(next_state, dtype=torch.float32)
+            _, next_value = self.actor_critic(next_state_tensor)
+
+            # compute the TD error
+            #     (reward + (gamma * next_state_value * (!terminal_state)) - state_value) 
+            advantage = r + self.options.gamma * next_value * (not done) - v
+
+            # update current state to point to the next one
+            self.update_actor_critic(advantage, p, v)
+
+            # move to next state
+            state = next_state
+
+            if done:
+                # print('reached terminal state. breaking from the loop.')
+                break
 
     def actor_loss(self, advantage, prob):
         """
@@ -150,6 +173,11 @@ class A2C(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################)
+        # compute the actor's unreduced loss
+        #     policy gradient loss is = (-log(probabilities)) * advantage
+        apgl = -torch.log(prob) * advantage
+
+        return apgl
 
     def critic_loss(self, advantage, value):
         """
@@ -165,6 +193,11 @@ class A2C(AbstractSolver):
         ################################
         #   YOUR IMPLEMENTATION HERE   #
         ################################
+        # compute the critic's unreduced loss
+        #     critic gradient loss is = (-advantage) * value
+        cgl = -advantage * value
+
+        return cgl
 
     def __str__(self):
         return "A2C"
