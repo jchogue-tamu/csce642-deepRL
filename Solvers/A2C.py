@@ -144,10 +144,10 @@ class A2C(AbstractSolver):
             #     (reward + (gamma * next_state_value * (!terminal_state)) - state_value) 
             advantage = r + self.options.gamma * next_value * (not done) - v
 
-            # update current state to point to the next one
+            # update actor and critic state
             self.update_actor_critic(advantage, p, v)
 
-            # move to next state
+            # update current state to point to the next one
             state = next_state
 
             if done:
